@@ -1,0 +1,21 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Dependency directories
+node_modules/
+
+# Vite build outputs
+dist/
+.vite/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Developer exporting files
+*.zip
+
+# Developer snippets of code examples
+junk/

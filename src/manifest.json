@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Mashinted",
+  "version": "1.0",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://www.vinted.fr/*", 
+    "https://www.vinted.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.vinted.fr/*", 
+        "https://www.vinted.com/*"
+      ],
+      "js": ["content/index.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_icon": {
+      "16": "icon-16.png",
+      "48": "icon-48.png"
+    }  
+    },
+  "icons": {
+    "16": "icon-16.png",
+    "48": "icon-48.png"
+  }
+}
