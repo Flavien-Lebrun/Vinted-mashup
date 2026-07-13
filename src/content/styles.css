@@ -1,3 +1,18 @@
-img {
-    opacity: 0;
+.mashinted-hidden-by-blacklist {
+    overflow: hidden !important;
+    max-height: var(--mashinted-item-max-height, 420px) !important;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transform-origin: center top;
+    transition: max-height 220ms ease, opacity 220ms ease, transform 220ms ease, margin 220ms ease, padding 220ms ease;
+}
+
+.mashinted-hidden-by-blacklist.mashinted-hidden-by-blacklist-active {
+    opacity: 0 !important;
+    transform: scale(0.9) !important;
+    transition: opacity 0.4s ease, transform 0.4s ease !important;
+}
+
+.mashinted-hidden-by-blacklist.mashinted-hidden-by-blacklist-final {
+    display: none !important;
 }
