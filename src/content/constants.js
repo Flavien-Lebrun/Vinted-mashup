@@ -1,6 +1,5 @@
 export const HOMEPAGE_BLOCKS_SELECTOR = '.feed-grid, .homepage-blocks[data-testid="homepage-blocks"]';
 export const BRAND_NAME_SELECTOR = 'p[data-testid*="description-title"]';
-export const BRANDS_BLACKLIST = ['shein', 'zara', 'nike', 'vintage dressing'];
 export const HIDDEN_BY_BLACKLIST_ATTRIBUTE = 'data-mashinted-hidden-by-blacklist';
 export const HIDDEN_BY_BLACKLIST_CLASS = 'mashinted-hidden-by-blacklist';
 export const HIDDEN_BY_BLACKLIST_ACTIVE_CLASS = 'mashinted-hidden-by-blacklist-active';

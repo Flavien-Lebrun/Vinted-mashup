@@ -1,6 +1,5 @@
 import {
     BRAND_NAME_SELECTOR,
-    BRANDS_BLACKLIST,
     GRID_ITEM_RETRY_INTERVAL_MS,
     GRID_ITEM_RETRY_LIMIT,
     HIDDEN_BY_BLACKLIST_ACTIVE_CLASS,
@@ -9,6 +8,7 @@ import {
     HIDDEN_BY_BLACKLIST_FINAL_CLASS,
     HIDE_TRANSITION_DURATION_MS,
 } from './constants.js';
+import { isBlacklistedBrand } from './storage.js';
 
 const observedGridItems = new WeakSet();
 const blockedGridItems = new WeakSet();
@@ -106,7 +106,7 @@ function logBrandNameWithin(root) {
 
         foundBrandName = true;
 
-        if (BRANDS_BLACKLIST.includes(normalizedBrandName)) {
+        if (isBlacklistedBrand(normalizedBrandName)) {
             blockGridItem(root, text);
             return true;
         }
