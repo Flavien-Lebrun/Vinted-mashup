@@ -3,6 +3,10 @@
   "name": "Mashinted",
   "version": "1.0",
   "permissions": ["storage"],
+  "background": {
+    "service_worker": "background/index.js",
+    "type": "module"
+  },
   "host_permissions": [
     "https://www.vinted.fr/*", 
     "https://www.vinted.com/*"
