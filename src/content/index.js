@@ -2,9 +2,9 @@ import './styles.css';
 
 console.log('[Mashinted] Content script loaded.');
 
-// Selector for the hydrated feed container on both supported layouts.
-import { startObserver } from './observers.js';
 import { ensureBrandBlacklistStorageReady } from './storage.js';
+import { initializeTrashEngine } from './trash-engine.js';
+import { startObserver } from './observers.js';
 
 ensureBrandBlacklistStorageReady()
     .catch((error) => {
@@ -12,4 +12,5 @@ ensureBrandBlacklistStorageReady()
     })
     .finally(() => {
         startObserver();
+        initializeTrashEngine();
     });

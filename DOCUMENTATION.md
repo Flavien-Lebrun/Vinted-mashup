@@ -170,7 +170,9 @@ The extension must handle two structural patterns for identifying grids and inje
         <div data-testid="feed-item">
             <div>
                 <div>
-                    <div data-testid="feed-item--image"><img data-testid="feed-item--image--img"></div>
+                    <div data-testid="feed-item--image">
+                        <img data-testid="feed-item--image--img">
+                    </div>
                 </div>
                 <a data-testid="feed-item--overlay-link"><div></div></a>
                 <div>
@@ -292,3 +294,122 @@ When run on a slower connection, the `MutationObserver` was unable to detect new
 *   The first animation version hid the card visually but left the grid gap behind, so the item had to be finalized with `display: none` after the transition.
 *   Heavy mutation logging added extra churn and made the unstable pages worse, so the logging had to be reduced.
 *   The root observer needed a safe lifecycle guard so it would not be disconnected through a stale reference on fast-loading pages.
+
+Here is the summarized breakdown of the issues we encountered, their root causes, and the concrete code changes we implemented. You can drop this directly into your existing documentation right beneath your **Issues encountered** list.
+
+---
+
+### 7.2 Core stability and DOM variation issues resolved [17-07-2026]
+
+As the script grew to support custom removal actions and cross-page navigation, several edge cases surfaced involving Vinted’s shifting UI layouts, React's state-management interference, and native browser accessibility layers.
+
+#### Issues encountered & Their fixes
+
+* **Vinted Layout Duplicity (Feed vs. Carousel):**
+* *Issue:* Relying entirely on the `[data-testid^="product-item-id-"]` prefix caused the script to miss items rendered inside recommendation carousels or alternative search views that used a `feed-item--image` layout block instead.
+* *Fix:* Abstracted the product ID resolution into a centralized multi-strategy `getProductId()` helper. The helper shifts the primary source of truth to the numeric ID inside the permanent item detail link (`a[href^="/items/"]`), falling back to structural data attributes only if the link is missing.
+
+
+* **Layout Ghosts on Manual Click Depletions:**
+* *Issue:* When a user manually deleted an item via our custom trash icon, the element would turn blank but keep its layout dimensions, leaving an awkward empty white gap in the grid. This happened because React unmounted the card’s inner children mid-click, crashing our height measurement calculations and preventing the smooth CSS shrink transition from firing cleanly.
+* *Fix:* Introduced a boolean `isManual` flag inside the `blockGridItem()` pipeline. Automated brand sweeps use the smooth CSS max-height transition to keep the scroll index stable, while manual trash icon clicks bypass the animation timers entirely and trigger an instant `display: none !important` hard collapse.
+
+
+* **Aria-Hidden Ancestor Focus Collision:**
+* *Issue:* Clicking the trash icon instantly triggered a browser error complaining that an `aria-hidden="true"` attribute was applied to an ancestor element while focus was actively trapped on our custom inner button.
+* *Fix:* Swapped out the brittle manual string mutations of `aria-hidden` in favor of the modern `inert` DOM attribute. We also added an explicit active element focus check that calls `.blur()` to safely step focus away from the item right before layout execution.
+
+---
+
+### 7.3 Core Engine Additions and Enhancements
+
+To implement these structural fixes, we added the following major components and modifications to our source scripts:
+
+#### Multi-Strategy ID Extractor (`grid-item.js` & `trash-engine.js`)
+
+We injected a unified parsing engine to scrape IDs reliably regardless of which AB-tested template Vinted decides to feed the client:
+
+```javascript
+function getProductId(gridItem) {
+    // Strategy 1: Pull from the immutable product URL path
+    const itemLink = gridItem.querySelector('a[href^="/items/"]');
+    if (itemLink) {
+        const href = itemLink.getAttribute('href');
+        const match = href.match(/\/items\/(\d+)/);
+        if (match) return match[1];
+    }
+
+    // Strategy 2: Standard feed template fallback
+    const innerContainer = gridItem.querySelector('[data-testid^="product-item-id-"]');
+    if (innerContainer) {
+        const match = innerContainer.getAttribute('data-testid')?.match(/product-item-id-(\d+)/);
+        if (match) return match[1];
+    }
+    
+    // Strategy 3: Favorite context signature lookup
+    const favBtn = gridItem.querySelector('[data-testid$="--favourite"]');
+    if (favBtn) {
+        const match = favBtn.getAttribute('data-testid')?.match(/product-item-id-(\d+)/);
+        if (match) return match[1];
+    }
+    
+    return null;
+}
+
+```
+
+#### Dual-State Blocking Routine (`grid-item.js`)
+
+We refactored `blockGridItem` to branch depending on whether the block was initiated by background brand scanners or an interactive user action, incorporating native focus blurring and safety flags:
+
+```javascript
+function blockGridItem(gridItem, brandName, isManual = false) {
+    const productId = getProductId(gridItem);
+    
+    if (productId) {
+        const wasAlreadyBlocked = blockedGridItems.has(productId);
+        if (!wasAlreadyBlocked) {
+            blockedGridItems.add(productId);
+            stopRetryingGridItem(gridItem);
+            console.log('[Mashinted] Grid item blocked (ID:', productId, ') due to:', brandName);
+        }
+    } else {
+        blockedGridItems.add(gridItem);
+    }
+
+    if (isManual) {
+        // Clear active element focus to prevent accessibility engine traps
+        if (gridItem.contains(document.activeElement)) {
+            document.activeElement.blur();
+        }
+
+        // Hard layout collapse to dodge React DOM race-conditions
+        gridItem.classList.add(HIDDEN_BY_BLACKLIST_FINAL_CLASS);
+        gridItem.style.setProperty('display', 'none', 'important');
+        gridItem.style.setProperty('visibility', 'hidden', 'important');
+        
+        gridItem.inert = true; // Modern alternative to aria-hidden
+        gridItem.setAttribute(HIDDEN_BY_BLACKLIST_ATTRIBUTE, 'true');
+        stopHideFinalization(gridItem);
+    } else {
+        enforceHiddenGridItem(gridItem);
+    }
+}
+
+```
+
+#### Manual Destruction Hook (`trash-engine.js`)
+
+We passed down `true` inside the interactive event handler within the dynamic button injector loop to declare it as a manual event:
+
+```javascript
+container.querySelector('button').addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    
+    // Signals manual interaction to bypass animation calculations and kill the node layout gap instantly
+    blockGridItem(gridItem, 'User Deleted', true);
+});
+
+```
