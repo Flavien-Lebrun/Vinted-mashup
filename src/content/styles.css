@@ -1,3 +1,60 @@
-img {
-    opacity: 0;
+.mashinted-hidden-by-blacklist {
+    overflow: hidden !important;
+    max-height: var(--mashinted-item-max-height, 420px) !important;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transform-origin: center top;
+    transition: max-height 220ms ease, opacity 220ms ease, transform 220ms ease, margin 220ms ease, padding 220ms ease;
+}
+
+.mashinted-hidden-by-blacklist.mashinted-hidden-by-blacklist-active {
+    opacity: 0 !important;
+    transform: scale(0.9) !important;
+    transition: opacity 0.4s ease, transform 0.4s ease !important;
+}
+
+.mashinted-hidden-by-blacklist.mashinted-hidden-by-blacklist-final {
+    display: none !important;
+}
+
+/* Ensure our button acts exactly like Vinted's, but with its own animations and transition timings */
+.mashinted-trash-btn {
+    cursor: pointer !important;
+    border: none !important;
+    outline: none !important;
+    transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    
+    /* Spring-in entry animation to mask React hydration updates */
+    animation: mashintedSpringIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+}
+
+/* Slight scale feedback when interacting */
+.mashinted-trash-btn:hover {
+    transform: scale(1.06) !important;
+}
+
+.mashinted-trash-btn:active {
+    transform: scale(0.95) !important;
+}
+
+/* Replicate their greyscale transition but transition into deletion red */
+.mashinted-trash-btn svg {
+    transition: stroke 0.15s ease !important;
+    fill: none;
+}
+
+.mashinted-trash-btn:hover .web_ui__Icon__greyscale-level-2 {
+    color: #ff4d4f !important; /* Vinted text/icon color is controlled via 'currentColor' */
+}
+
+/* Smooth pop scaling keyframe */
+@keyframes mashintedSpringIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.6);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
