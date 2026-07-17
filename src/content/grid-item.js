@@ -14,6 +14,7 @@ import {
     blockedGridItems,
     gridItemRetryTimers,
     hideFinalizationTimers,
+    incrementPageBlockedCount,
 } from './state.js';
 
 import { isBlacklistedBrand } from './storage.js';
@@ -126,16 +127,25 @@ function enforceHiddenGridItem(gridItem) {
 
 function blockGridItem(gridItem, brandName, isManual = false) {
     const productId = getProductId(gridItem);
+    let isNewBlock = false;
 
     if (productId) {
         const wasAlreadyBlocked = blockedGridItems.has(productId);
         if (!wasAlreadyBlocked) {
             blockedGridItems.add(productId);
+            isNewBlock = true;
             stopRetryingGridItem(gridItem);
             console.log('[Mashinted] Grid item blocked (ID:', productId, ') due to:', brandName);
         }
     } else {
-        blockedGridItems.add(gridItem);
+        if (!blockedGridItems.has(gridItem)) {
+            blockedGridItems.add(gridItem);
+            isNewBlock = true;
+        }
+    }
+
+    if (isNewBlock) {
+        incrementPageBlockedCount();
     }
 
     if (isManual) {

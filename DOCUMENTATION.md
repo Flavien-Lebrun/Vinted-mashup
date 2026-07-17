@@ -305,20 +305,21 @@ As the script grew to support custom removal actions and cross-page navigation, 
 
 #### Issues encountered & Their fixes
 
-* **Vinted Layout Duplicity (Feed vs. Carousel):**
-* *Issue:* Relying entirely on the `[data-testid^="product-item-id-"]` prefix caused the script to miss items rendered inside recommendation carousels or alternative search views that used a `feed-item--image` layout block instead.
-* *Fix:* Abstracted the product ID resolution into a centralized multi-strategy `getProductId()` helper. The helper shifts the primary source of truth to the numeric ID inside the permanent item detail link (`a[href^="/items/"]`), falling back to structural data attributes only if the link is missing.
+*   **Vinted Layout Duplicity (Feed vs. Carousel):**
+    *   *Issue:* Relying entirely on the `[data-testid^="product-item-id-"]` prefix caused the script to miss items rendered inside recommendation carousels or alternative search views that used a `feed-item--image` layout block instead.
+    *   *Fix:* Abstracted the product ID resolution into a centralized multi-strategy `getProductId()` helper. The helper shifts the primary source of truth to the numeric ID inside the permanent item detail link (`a[href^="/items/"]`), falling back to structural data attributes only if the link is missing.
 
+*   **Layout Ghosts on Manual Click Depletions:**
+    *   *Issue:* When a user manually deleted an item via our custom trash icon, the element would turn blank but keep its layout dimensions, leaving an awkward empty white gap in the grid. This happened because React unmounted the card’s inner children mid-click, crashing our height measurement calculations and preventing the smooth CSS shrink transition from firing cleanly.
+    *   *Fix:* Introduced a boolean `isManual` flag inside the `blockGridItem()` pipeline. Automated brand sweeps use the smooth CSS max-height transition to keep the scroll index stable, while manual trash icon clicks bypass the animation timers entirely and trigger an instant `display: none !important` hard collapse.
 
-* **Layout Ghosts on Manual Click Depletions:**
-* *Issue:* When a user manually deleted an item via our custom trash icon, the element would turn blank but keep its layout dimensions, leaving an awkward empty white gap in the grid. This happened because React unmounted the card’s inner children mid-click, crashing our height measurement calculations and preventing the smooth CSS shrink transition from firing cleanly.
-* *Fix:* Introduced a boolean `isManual` flag inside the `blockGridItem()` pipeline. Automated brand sweeps use the smooth CSS max-height transition to keep the scroll index stable, while manual trash icon clicks bypass the animation timers entirely and trigger an instant `display: none !important` hard collapse.
+*   **Aria-Hidden Ancestor Focus Collision:**
+    *   *Issue:* Clicking the trash icon instantly triggered a browser error complaining that an `aria-hidden="true"` attribute was applied to an ancestor element while focus was actively trapped on our custom inner button.
+    *   *Fix:* Swapped out the brittle manual string mutations of `aria-hidden` in favor of the modern `inert` DOM attribute. We also added an explicit active element focus check that calls `.blur()` to safely step focus away from the item right before layout execution.
 
-
-* **Aria-Hidden Ancestor Focus Collision:**
-* *Issue:* Clicking the trash icon instantly triggered a browser error complaining that an `aria-hidden="true"` attribute was applied to an ancestor element while focus was actively trapped on our custom inner button.
-* *Fix:* Swapped out the brittle manual string mutations of `aria-hidden` in favor of the modern `inert` DOM attribute. We also added an explicit active element focus check that calls `.blur()` to safely step focus away from the item right before layout execution.
-
+*   **React Tree Reconciliation Erasure (The Counter Bug):**
+    *   *Issue:* Floating elements injected into the DOM were routinely targeted, reset, or completely deleted by React's structural reconciliation engine during SPA page navigation. Worse, binding the widget creation loop directly to a broad `MutationObserver` forced a massive feedback cascade: every single layout re-render added another data listener, stacking hundreds of duplicate active callbacks that caused maximum call-stack memory exhaustion.
+    *   *Fix:* Disconnected UI rendering from data changes by storing a persistent state value (`latestCountMemory`) in our memory space. The widget subscribes to data modifications precisely *once* at boot. The global page layout observer now runs an incredibly lightweight presence check (`document.getElementById`), acting as a clean self-healing layer that snaps the structural HTML shell back into `document.body` if React wipes it out, completely mitigating framework interference.
 ---
 
 ### 7.3 Core Engine Additions and Enhancements
