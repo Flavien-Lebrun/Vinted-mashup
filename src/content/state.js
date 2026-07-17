@@ -13,3 +13,11 @@ export const blockedGridItems = new Set();
 // Tracks active retry timers to prevent memory leaks
 export const gridItemRetryTimers = new WeakMap();
 export const hideFinalizationTimers = new WeakMap();
+
+// Sync stored manual item blocks into memory on boot
+export function initBlockedItemsFromStorage(storedIds) {
+    blockedGridItems.clear();
+    if (Array.isArray(storedIds)) {
+        storedIds.forEach(id => blockedGridItems.add(id));
+    }
+}
