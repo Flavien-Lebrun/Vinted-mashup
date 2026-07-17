@@ -8,12 +8,41 @@ import {
     HIDDEN_BY_BLACKLIST_FINAL_CLASS,
     HIDE_TRANSITION_DURATION_MS,
 } from './constants.js';
+
+import {
+    observedGridItems,
+    blockedGridItems,
+    gridItemRetryTimers,
+    hideFinalizationTimers,
+} from './state.js';
+
 import { isBlacklistedBrand } from './storage.js';
 
-const observedGridItems = new WeakSet();
-const blockedGridItems = new WeakSet();
-const gridItemRetryTimers = new WeakMap();
-const hideFinalizationTimers = new WeakMap();
+function getProductId(gridItem) {
+    // Strategy 1: Find the product anchor link and extract the ID from the href
+    const itemLink = gridItem.querySelector('a[href^="/items/"]');
+    if (itemLink) {
+        const href = itemLink.getAttribute('href'); // e.g., "/items/9373017791-vintage-jacket"
+        const match = href.match(/\/items\/(\d+)/);
+        if (match) return match[1];
+    }
+
+    // Strategy 2: Check testid on the product container layout
+    const innerContainer = gridItem.querySelector('[data-testid^="product-item-id-"]');
+    if (innerContainer) {
+        const match = innerContainer.getAttribute('data-testid')?.match(/product-item-id-(\d+)/);
+        if (match) return match[1];
+    }
+    
+    // Strategy 3: Check favorite button test ID fallback
+    const favBtn = gridItem.querySelector('[data-testid$="--favourite"]');
+    if (favBtn) {
+        const match = favBtn.getAttribute('data-testid')?.match(/product-item-id-(\d+)/);
+        if (match) return match[1];
+    }
+    
+    return null;
+}
 
 function stopRetryingGridItem(gridItem) {
     const timerId = gridItemRetryTimers.get(gridItem);
@@ -72,27 +101,55 @@ function enforceHiddenGridItem(gridItem) {
         scheduleHideFinalization(gridItem);
     });
 
+    // Safe blur and modern layout locking
+    if (gridItem.contains(document.activeElement)) {
+        document.activeElement.blur();
+    }
     gridItem.style.setProperty('pointer-events', 'none', 'important');
-    gridItem.setAttribute('aria-hidden', 'true');
+    gridItem.inert = true; // Replaces aria-hidden smoothly
     gridItem.setAttribute(HIDDEN_BY_BLACKLIST_ATTRIBUTE, 'true');
 }
 
-function blockGridItem(gridItem, brandName) {
-    const wasAlreadyBlocked = blockedGridItems.has(gridItem);
-
-    if (!wasAlreadyBlocked) {
+function blockGridItem(gridItem, brandName, isManual = false) {
+    const productId = getProductId(gridItem);
+    
+    if (productId) {
+        const wasAlreadyBlocked = blockedGridItems.has(productId);
+        if (!wasAlreadyBlocked) {
+            blockedGridItems.add(productId);
+            stopRetryingGridItem(gridItem);
+            console.log('[Mashinted] Grid item blocked (ID:', productId, ') due to:', brandName);
+        }
+    } else {
         blockedGridItems.add(gridItem);
-        stopRetryingGridItem(gridItem);
-        console.log('[Mashinted] Grid item blocked due to blacklisted brand:', brandName);
     }
 
-    enforceHiddenGridItem(gridItem);
+    if (isManual) {
+        // 1. Remove focus from the active trash button so focus isn't trapped in a hidden element
+        if (gridItem.contains(document.activeElement)) {
+            document.activeElement.blur();
+        }
+
+        // 2. Collapse the layout instantly
+        gridItem.classList.add(HIDDEN_BY_BLACKLIST_FINAL_CLASS);
+        gridItem.style.setProperty('display', 'none', 'important');
+        gridItem.style.setProperty('visibility', 'hidden', 'important');
+        
+        // 3. Make the element entirely inert (prevents focus, clicks, and hides from screen readers)
+        gridItem.inert = true;
+        gridItem.setAttribute(HIDDEN_BY_BLACKLIST_ATTRIBUTE, 'true');
+        
+        stopHideFinalization(gridItem);
+    } else {
+        // Fall back to the smooth CSS transition for auto-blacklist
+        enforceHiddenGridItem(gridItem);
+    }
 }
 
-function logBrandNameWithin(root) {
-    const brandNames = root.matches?.(BRAND_NAME_SELECTOR)
-        ? [root]
-        : root.querySelectorAll?.(BRAND_NAME_SELECTOR) ?? [];
+function logBrandNameWithin(gridItem) {
+    const brandNames = gridItem.matches?.(BRAND_NAME_SELECTOR)
+        ? [gridItem]
+        : gridItem.querySelectorAll?.(BRAND_NAME_SELECTOR) ?? [];
 
     let foundBrandName = false;
 
@@ -107,11 +164,10 @@ function logBrandNameWithin(root) {
         foundBrandName = true;
 
         if (isBlacklistedBrand(normalizedBrandName)) {
-            blockGridItem(root, text);
+            blockGridItem(gridItem, text);
             return true;
         }
     }
-
     return foundBrandName;
 }
 
@@ -156,12 +212,18 @@ function watchGridItemForBrandName(gridItem) {
             return;
         }
 
-        if (blockedGridItems.has(gridItem) || gridItem.getAttribute(HIDDEN_BY_BLACKLIST_ATTRIBUTE) === 'true') {
+        const productId = getProductId(gridItem);
+
+        // Keep listing hidden if its product ID or DOM object is in our blacklist
+        if (
+            (productId && blockedGridItems.has(productId)) || 
+            blockedGridItems.has(gridItem) || 
+            gridItem.getAttribute(HIDDEN_BY_BLACKLIST_ATTRIBUTE) === 'true'
+        ) {
             if (!gridItem.classList.contains(HIDDEN_BY_BLACKLIST_ACTIVE_CLASS)
                 || gridItem.getAttribute(HIDDEN_BY_BLACKLIST_ATTRIBUTE) !== 'true') {
                 enforceHiddenGridItem(gridItem);
             }
-
             return;
         }
 
@@ -186,8 +248,12 @@ function watchGridItemsWithin(root) {
 }
 
 export {
+    getProductId,
     finalizeHiddenGridItem,
     enforceHiddenGridItem,
     watchGridItemForBrandName,
     watchGridItemsWithin,
+    stopRetryingGridItem,
+    stopHideFinalization,
+    blockGridItem,
 };

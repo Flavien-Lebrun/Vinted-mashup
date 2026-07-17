@@ -2,19 +2,31 @@ import {
     HOMEPAGE_BLOCKS_SELECTOR,
     ROOT_OBSERVER_DISCONNECT_DELAY_MS,
 } from './constants.js';
-import { watchGridItemsWithin } from './grid-item.js';
+
+import {
+    watchGridItemsWithin,
+    stopRetryingGridItem,
+    stopHideFinalization,
+} from './grid-item.js';
 
 function observeHomepageBlocks(homepageBlocks) {
+    // 1. Run your brand-name / blacklist checker immediately on load
     watchGridItemsWithin(homepageBlocks);
 
     const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
+            // Check newly added nodes for brand matching
             for (const node of mutation.addedNodes) {
-                if (!(node instanceof Element)) {
-                    continue;
+                if (node instanceof Element) {
+                    watchGridItemsWithin(node); 
                 }
-
-                watchGridItemsWithin(node);
+            }
+            // Memory cleanups when React unmounts items
+            for (const node of mutation.removedNodes) {
+                if (node instanceof Element) {
+                    stopRetryingGridItem(node);
+                    stopHideFinalization(node);
+                }
             }
         }
     });
@@ -33,14 +45,15 @@ function startObserver() {
     console.log('[Mashinted] Starting root observer.');
 
     const attachObserver = () => {
-        if (homepageBlocksObserverAttached) {
+        const homepageBlocks = document.querySelector(HOMEPAGE_BLOCKS_SELECTOR);
+
+        if (homepageBlocksObserverAttached && homepageBlocks && homepageBlocks.isConnected) {
             return true;
         }
 
-        const homepageBlocks = document.querySelector(HOMEPAGE_BLOCKS_SELECTOR);
-
         if (!homepageBlocks) {
             console.log('[Mashinted] Homepage blocks not found yet.');
+            homepageBlocksObserverAttached = false; // Reset if it was destroyed
             return false;
         }
 
@@ -57,7 +70,9 @@ function startObserver() {
 
         rootObserverDisconnectTimer = window.setTimeout(() => {
             if (rootObserver) {
+                console.log('[Mashinted] Disconnecting root observer.');
                 rootObserver.disconnect();
+                rootObserver = null;
             }
 
             rootObserverDisconnectTimer = null;
