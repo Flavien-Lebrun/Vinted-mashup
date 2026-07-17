@@ -18,6 +18,20 @@ import {
 
 import { isBlacklistedBrand } from './storage.js';
 
+function extractBrandName(gridItem) {
+    const brandNames = gridItem.matches?.(BRAND_NAME_SELECTOR)
+        ? [gridItem]
+        : gridItem.querySelectorAll?.(BRAND_NAME_SELECTOR) ?? [];
+
+    for (const brandName of brandNames) {
+        const text = brandName.textContent?.trim();
+        if (text) {
+            return text; // Return the raw text immediately upon finding it
+        }
+    }
+    return null;
+}
+
 function getProductId(gridItem) {
     // Strategy 1: Find the product anchor link and extract the ID from the href
     const itemLink = gridItem.querySelector('a[href^="/items/"]');
@@ -33,14 +47,14 @@ function getProductId(gridItem) {
         const match = innerContainer.getAttribute('data-testid')?.match(/product-item-id-(\d+)/);
         if (match) return match[1];
     }
-    
+
     // Strategy 3: Check favorite button test ID fallback
     const favBtn = gridItem.querySelector('[data-testid$="--favourite"]');
     if (favBtn) {
         const match = favBtn.getAttribute('data-testid')?.match(/product-item-id-(\d+)/);
         if (match) return match[1];
     }
-    
+
     return null;
 }
 
@@ -112,7 +126,7 @@ function enforceHiddenGridItem(gridItem) {
 
 function blockGridItem(gridItem, brandName, isManual = false) {
     const productId = getProductId(gridItem);
-    
+
     if (productId) {
         const wasAlreadyBlocked = blockedGridItems.has(productId);
         if (!wasAlreadyBlocked) {
@@ -134,11 +148,11 @@ function blockGridItem(gridItem, brandName, isManual = false) {
         gridItem.classList.add(HIDDEN_BY_BLACKLIST_FINAL_CLASS);
         gridItem.style.setProperty('display', 'none', 'important');
         gridItem.style.setProperty('visibility', 'hidden', 'important');
-        
+
         // 3. Make the element entirely inert (prevents focus, clicks, and hides from screen readers)
         gridItem.inert = true;
         gridItem.setAttribute(HIDDEN_BY_BLACKLIST_ATTRIBUTE, 'true');
-        
+
         stopHideFinalization(gridItem);
     } else {
         // Fall back to the smooth CSS transition for auto-blacklist
@@ -147,28 +161,18 @@ function blockGridItem(gridItem, brandName, isManual = false) {
 }
 
 function logBrandNameWithin(gridItem) {
-    const brandNames = gridItem.matches?.(BRAND_NAME_SELECTOR)
-        ? [gridItem]
-        : gridItem.querySelectorAll?.(BRAND_NAME_SELECTOR) ?? [];
-
-    let foundBrandName = false;
-
-    for (const brandName of brandNames) {
-        const text = brandName.textContent?.trim();
-        const normalizedBrandName = text?.toLowerCase();
-
-        if (!normalizedBrandName) {
-            continue;
-        }
-
-        foundBrandName = true;
-
-        if (isBlacklistedBrand(normalizedBrandName)) {
-            blockGridItem(gridItem, text);
-            return true;
-        }
+    const text = extractBrandName(gridItem);
+    if (!text) {
+        return false;
     }
-    return foundBrandName;
+
+    const normalizedBrandName = text.toLowerCase();
+
+    if (isBlacklistedBrand(normalizedBrandName)) {
+        blockGridItem(gridItem, text);
+        return true;
+    }
+    return true; // Found a brand name string, even if it wasn't blacklisted yet
 }
 
 function retryLogBrandNameWithin(gridItem, attempt = 0) {
@@ -216,8 +220,8 @@ function watchGridItemForBrandName(gridItem) {
 
         // Keep listing hidden if its product ID or DOM object is in our blacklist
         if (
-            (productId && blockedGridItems.has(productId)) || 
-            blockedGridItems.has(gridItem) || 
+            (productId && blockedGridItems.has(productId)) ||
+            blockedGridItems.has(gridItem) ||
             gridItem.getAttribute(HIDDEN_BY_BLACKLIST_ATTRIBUTE) === 'true'
         ) {
             if (!gridItem.classList.contains(HIDDEN_BY_BLACKLIST_ACTIVE_CLASS)
@@ -256,4 +260,5 @@ export {
     stopRetryingGridItem,
     stopHideFinalization,
     blockGridItem,
+    extractBrandName
 };
