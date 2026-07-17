@@ -9,6 +9,36 @@ import {
     stopHideFinalization,
 } from './grid-item.js';
 
+import { resetPageBlockedCount } from './state.js';
+import { ensureCounterWidgetMounted } from './counter-widget.js';
+
+let lastObservedUrl = window.location.href;
+
+function startPageTransitionObserver() {
+    // Initial mount on script start
+    ensureCounterWidgetMounted();
+
+    const routeObserver = new MutationObserver(() => {
+        if (window.location.href !== lastObservedUrl) {
+            lastObservedUrl = window.location.href;
+            console.log('[Mashinted] Page transition detected, resetting counter.');
+            resetPageBlockedCount();
+            ensureCounterWidgetMounted();
+            return;
+        }
+
+        // Extremely light checks — no loop overhead or structural side-effects
+        if (!document.getElementById('mashinted-counter-widget')) {
+            ensureCounterWidgetMounted();
+        }
+    });
+
+    routeObserver.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+    });
+}
+
 function observeHomepageBlocks(homepageBlocks) {
     // 1. Run your brand-name / blacklist checker immediately on load
     watchGridItemsWithin(homepageBlocks);
@@ -18,7 +48,7 @@ function observeHomepageBlocks(homepageBlocks) {
             // Check newly added nodes for brand matching
             for (const node of mutation.addedNodes) {
                 if (node instanceof Element) {
-                    watchGridItemsWithin(node); 
+                    watchGridItemsWithin(node);
                 }
             }
             // Memory cleanups when React unmounts items
@@ -97,4 +127,7 @@ function startObserver() {
     });
 }
 
-export { startObserver };
+export {
+    startPageTransitionObserver,
+    startObserver
+};

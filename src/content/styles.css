@@ -23,13 +23,13 @@
     border: none !important;
     outline: none !important;
     transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-    
+
     /* Spring-in entry animation to mask React hydration updates */
     animation: mashintedSpringIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
 }
 
 /* Slight scale feedback when interacting */
-.mashinted-trash-btn:hover {
+.mashinted-trash-btn:after {
     transform: scale(1.06) !important;
 }
 
@@ -44,7 +44,8 @@
 }
 
 .mashinted-trash-btn:hover .web_ui__Icon__greyscale-level-2 {
-    color: #ff4d4f !important; /* Vinted text/icon color is controlled via 'currentColor' */
+    color: rgba(var(--primary-default), 1) !important;
+    /* Vinted text/icon color is controlled via 'currentColor' */
 }
 
 /* Smooth pop scaling keyframe */
@@ -53,8 +54,89 @@
         opacity: 0;
         transform: scale(0.6);
     }
+
     100% {
         opacity: 1;
         transform: scale(1);
+    }
+}
+
+/* <--- Floating counter ---> */
+/* Fixed container floating over the page */
+.mashinted-counter-widget-wrapper {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 999999;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+}
+
+.mashinted-counter-widget-wrapper.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* The native Vinted subtle hover overlay */
+.mashinted-counter-widget-wrapper button:hover::after {
+    content: "";
+    background-color: rgba(var(--greyscale-level-1), .02);
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    /* Ensures the button underneath still receives clicks */
+}
+
+.mashinted-counter-widget-wrapper button {
+    cursor: pointer !important;
+    position: relative;
+    /* Anchors the absolute ::after element */
+    overflow: hidden;
+    /* Keeps the overlay strictly inside the rounded borders */
+}
+
+/* Updated Badge: Fits Vinted's native text color variables perfectly */
+.mashinted-counter-widget-wrapper .widget-count-badge {
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
+    margin-left: 4px;
+    display: inline-block;
+    will-change: transform, opacity, color;
+    transform: translate3d(0, 0, 0);
+}
+
+/* The visual pop animation triggered via JS when the count changes */
+.mashinted-counter-widget-wrapper .widget-count-badge.pulse-bump {
+    animation: counter-smooth-increment 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes counter-smooth-increment {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: 1;
+    }
+
+    15% {
+        transform: translate3d(0, -3px, 0) scale(1.2);
+        color: rgba(var(--primary-default), 1);
+        opacity: 0.9;
+    }
+
+    45% {
+        transform: translate3d(0, -0.5px, 0) scale(1.05);
+        color: rgba(var(--primary-default), 1);
+    }
+
+    100% {
+        transform: translate3d(0, 0, 0) scale(1);
+        color: inherit;
+        opacity: 1;
     }
 }
