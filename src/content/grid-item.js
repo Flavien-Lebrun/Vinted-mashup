@@ -15,6 +15,7 @@ import {
     gridItemRetryTimers,
     hideFinalizationTimers,
     incrementPageBlockedCount,
+    incrementBrandSessionStat,
 } from './state.js';
 
 import { isBlacklistedBrand } from './storage.js';
@@ -146,6 +147,10 @@ function blockGridItem(gridItem, brandName, isManual = false) {
 
     if (isNewBlock) {
         incrementPageBlockedCount();
+
+        if (brandName && brandName !== 'Re-enforced Block') {
+            incrementBrandSessionStat(brandName);
+        }
     }
 
     if (isManual) {

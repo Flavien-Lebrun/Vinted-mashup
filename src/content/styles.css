@@ -106,7 +106,7 @@
     font-size: inherit;
     font-weight: inherit;
     color: inherit;
-    margin-left: 4px;
+    margin-right: 4px;
     display: inline-block;
     will-change: transform, opacity, color;
     transform: translate3d(0, 0, 0);
@@ -139,4 +139,379 @@
         color: inherit;
         opacity: 1;
     }
+}
+
+/* ==========================================================================
+   1. Core Variables & Global Resets
+   ========================================================================== */
+:root {
+    --vinted-ext-bg: #ffffff;
+    --vinted-ext-primary: #007784;
+    /* Vinted Brand Teal */
+    --vinted-ext-primary-hover: #005f6a;
+    --vinted-ext-text: #111111;
+    --vinted-ext-muted: #7c7c7c;
+    --vinted-ext-border: #e6e6e6;
+    --vinted-ext-danger: #d93838;
+    --vinted-ext-radius: 8px;
+    --vinted-ext-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+/* ==========================================================================
+   2. Modal Structural Components
+   ========================================================================== */
+
+/* --- Overlay Backdrop --- */
+.vinted-ext-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999999;
+    /* Positions on top of Vinted's sticky header elements */
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+}
+
+.vinted-ext-modal-overlay.active {
+    opacity: 1;
+}
+
+/* --- Container Window --- */
+.vinted-ext-modal-window {
+    background: var(--vinted-ext-bg);
+    width: 35%;
+    border-radius: var(--vinted-ext-radius);
+    box-shadow: var(--vinted-ext-shadow);
+    display: flex;
+    flex-direction: column;
+    transform: translateY(15px);
+    transition: transform 0.25s cubic-bezier(0.1, 0.8, 0.25, 1);
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.vinted-ext-modal-overlay.active .vinted-ext-modal-window {
+    transform: translateY(0);
+}
+
+/* --- Header & Typography --- */
+.vinted-ext-modal-header {
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.vinted-ext-modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--vinted-ext-text);
+}
+
+.vinted-ext-close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--vinted-ext-text);
+    line-height: 1;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease;
+}
+
+.vinted-ext-close-btn:hover {
+    color: var(--vinted-ext-text);
+}
+
+.vinted-ext-modal-body {
+    padding: 0px 15px 0px 15px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.vinted-ext-list-title {
+    border-bottom: 2px solid rgba(var(--background-action-primary-prominent-idle), 1);
+    display: flex;
+    align-items: center;
+    padding-bottom: 10px;
+    justify-content: center;
+}
+
+/* ==========================================================================
+   3. Unified Search Bar Input (Vinted Clone)
+   ========================================================================== */
+.mashinted-search-bar-container {
+    width: 100%;
+}
+
+.mashinted-search-bar-container .web_ui__InputBar__input-bar {
+    border-radius: 6px;
+    min-height: 36px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.mashinted-search-bar-container .web_ui__InputBar__input-bar:focus-within {
+    background-color: #ffffff;
+    border-color: var(--vinted-ext-primary);
+}
+
+.mashinted-search-bar-container .web_ui__InputBar__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--vinted-ext-muted);
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.mashinted-search-bar-container .web_ui__InputBar__value {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    height: 100%;
+    width: 100%;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--vinted-ext-text);
+    padding: 8px 0;
+}
+
+/* ==========================================================================
+   4. Custom Row Layout Elements (Single Line Framework)
+   ========================================================================== */
+ul.pile {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+    overflow-y: auto;
+}
+
+li.pile__element {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100%;
+}
+
+/* Single line hairline border separator */
+li.pile__element:not(:last-child) {
+    border-bottom: 1px solid var(--vinted-ext-border);
+}
+
+/* Explicit single row container wrapper override */
+.mashinted-row-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 6px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Flex group keeping counter and label cleanly locked on the left */
+.mashinted-row-left-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-grow: 1;
+    min-width: 0;
+    /* Prevents long names from exploding layout lines */
+}
+
+/* Minimalist Left Counter Badge without background borders */
+.mashinted-brand-minimal-counter {
+    color: var(--vinted-ext-primary);
+    font-size: 1.2rem;
+    font-weight: 700;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    /* Keeps numerical width constant */
+}
+
+.mashinted-brand-plain-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--vinted-ext-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vinted-ext-delete-btn {
+    background: none;
+    border: none;
+    color: var(--vinted-ext-muted);
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    flex-shrink: 0;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.vinted-ext-delete-btn:hover {
+    background-color: rgba(217, 56, 56, 0.08);
+    color: var(--vinted-ext-danger);
+}
+
+.vinted-ext-empty-state {
+    text-align: center;
+    color: var(--vinted-ext-muted);
+    padding: 24px 0;
+    font-size: 0.95rem;
+    font-style: italic;
+}
+
+/* Structural adjustment block for nested labels inside quick-add row */
+.mashinted-quick-add-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* ==========================================================================
+   5. Dynamic Quick-Add Action Row
+   ========================================================================== */
+.mashinted-quick-add-row-wrapper {
+    background-color: rgba(0, 119, 130, 0.03);
+}
+
+.mashinted-quick-add-row {
+    border-radius: 4px;
+    margin: 4px 0 !important;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.mashinted-quick-add-row-wrapper:hover {
+    background-color: rgba(0, 119, 130, 0.07);
+}
+
+.mashinted-quick-add-label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--vinted-ext-muted);
+    margin-bottom: 2px;
+}
+
+.mashinted-inline-add-btn {
+    background: var(--vinted-ext-primary);
+    color: #ffffff;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.mashinted-quick-add-row-wrapper:hover .mashinted-inline-add-btn {
+    transform: scale(1.1);
+}
+
+/* ==========================================================================
+   6. Main Interface Chip Animations (Chevron Rotation)
+   ========================================================================== */
+.mashinted-widget-chevron-container .web_ui__Icon__icon {
+    transform: rotate(0deg);
+    transform-origin: center center;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--vinted-ext-muted);
+}
+
+.web_ui__Chip__activated .mashinted-widget-chevron-container .web_ui__Icon__icon {
+    transform: rotate(180deg);
+    color: var(--vinted-ext-primary);
+}
+
+/* ==========================================================================
+   Isolate Checkbox Framework (Avoids Vinted Component Inheritance)
+   ========================================================================== */
+
+.mashinted-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding-left: 8px;
+}
+
+.mashinted-custom-checkbox {
+  position: relative;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Hide the root browser default check controls */
+.mashinted-custom-checkbox input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  margin: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+/* Clean Custom Box Canvas Background Edge */
+.mashinted-checkbox-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--vinted-ext-muted);
+  border-radius: 4px;
+  background-color: transparent;
+  box-sizing: border-box;
+  z-index: 1;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* Checked Action Transformations */
+.mashinted-custom-checkbox input:checked ~ .mashinted-checkbox-box {
+  background-color: var(--vinted-ext-primary) !important;
+  border-color: var(--vinted-ext-primary) !important;
+}
+
+/* Checkmark white alignment tick lines */
+.mashinted-custom-checkbox input:checked ~ .mashinted-checkbox-box::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
