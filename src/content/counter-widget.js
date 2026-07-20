@@ -1,10 +1,13 @@
+// src/content/counter-widget.js
 import { subscribeToCountChanges } from './state.js';
+import { getAllBrands, addBrand, removeBrand } from './storage.js';
+import { createConfigModal } from './modal.js';
 
 const WIDGET_ID = 'mashinted-counter-widget';
 let latestCountMemory = 0;
-let isMenuOpen = false;
+let activeModalRef = null; // Keeps track of the open modal instance
 
-export function setupCounterWidgetSubscription() {
+function setupCounterWidgetSubscription() {
     subscribeToCountChanges((newCount) => {
         const isIncrement = newCount > latestCountMemory;
         latestCountMemory = newCount;
@@ -31,7 +34,7 @@ export function setupCounterWidgetSubscription() {
     });
 }
 
-export function ensureCounterWidgetMounted() {
+function ensureCounterWidgetMounted() {
     if (document.getElementById(WIDGET_ID)) return;
 
     const wrapper = document.createElement('div');
@@ -51,6 +54,16 @@ export function ensureCounterWidgetMounted() {
                         <div class="web_ui__Chip__suffix">
                             <span class="widget-count-badge">${latestCountMemory}</span>
                         </div>
+                        <!-- Native Vinted Rotating Chevron Suffix Inserted Below -->
+                        <div class="web_ui__Chip__suffix mashinted-widget-chevron-container">
+                            <span class="u-flexbox u-align-items-center">
+                                <span class="web_ui__Icon__icon" style="width:16px; height:16px; display:inline-flex;">
+                                    <svg fill="none" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+                                        <path fill="currentColor" d="M2.47 4.47a.75.75 0 0 1 1.06 0L8 8.94l4.47-4.47a.75.75 0 1 1 1.06 1.06l-5 5a.75.75 0 0 1-1.06 0l-5-5a.75.75 0 0 1 0-1.06"></path>
+                                    </svg>
+                                </span>
+                            </span>
+                        </div>
                     </button>
                 </div>
             </div>
@@ -65,15 +78,37 @@ export function ensureCounterWidgetMounted() {
 
     const nativeButton = wrapper.querySelector('button');
 
-    // Only keeping the click listener for your future menu activation!
-    nativeButton.addEventListener('click', () => {
-        isMenuOpen = !isMenuOpen;
-        if (isMenuOpen) {
-            nativeButton.classList.add('web_ui__Chip__activated');
-            nativeButton.setAttribute('aria-pressed', 'true');
-        } else {
-            nativeButton.classList.remove('web_ui__Chip__activated');
-            nativeButton.setAttribute('aria-pressed', 'false');
+    nativeButton.addEventListener('click', async () => {
+        if (activeModalRef) {
+            activeModalRef.destroyModal();
+            return;
         }
+
+        nativeButton.classList.add('web_ui__Chip__activated');
+        nativeButton.setAttribute('aria-pressed', 'true');
+
+        const currentBannedList = await getAllBrands();
+
+        activeModalRef = createConfigModal({
+            bannedBrands: currentBannedList,
+            onAddBrand: async (newBrand) => {
+                const updatedList = await addBrand(newBrand);
+                if (activeModalRef) activeModalRef.updateList(updatedList);
+            },
+            onDeleteBrand: async (removedBrand) => {
+                const updatedList = await removeBrand(removedBrand);
+                if (activeModalRef) activeModalRef.updateList(updatedList);
+            },
+            onClose: () => {
+                nativeButton.classList.remove('web_ui__Chip__activated');
+                nativeButton.setAttribute('aria-pressed', 'false');
+                activeModalRef = null;
+            }
+        });
     });
+}
+
+export {
+    setupCounterWidgetSubscription,
+    ensureCounterWidgetMounted,
 }
