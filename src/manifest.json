@@ -4,21 +4,32 @@
   "version": "1.0",
   "permissions": ["storage"],
   "background": {
-    "service_worker": "background/index.js",
+    "service_worker": "src/background/index.js",
     "type": "module"
   },
   "host_permissions": [
     "https://www.vinted.fr/*", 
     "https://www.vinted.com/*"
   ],
-  "content_scripts": [
+    "content_scripts": [
     {
+      "matches": ["https://www.vinted.fr/*", "https://www.vinted.com/*"],
+      "js": ["src/fast-widget-loader.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://www.vinted.fr/*", "https://www.vinted.com/*"],
+      "js": ["src/content/index.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["public/checker.js"],
       "matches": [
         "https://www.vinted.fr/*", 
         "https://www.vinted.com/*"
-      ],
-      "js": ["content/index.js"],
-      "run_at": "document_start"
+      ]
     }
   ],
   "action": {
@@ -26,7 +37,7 @@
       "16": "icon-16.png",
       "48": "icon-48.png"
     }  
-    },
+  },
   "icons": {
     "16": "icon-16.png",
     "48": "icon-48.png"
