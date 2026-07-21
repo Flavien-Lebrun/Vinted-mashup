@@ -216,3 +216,19 @@ function getProductId(gridItem) {
 * **Issue:** Modal rendered brand list items without `+X` count badges despite the counter logic detecting blocked items.
 * **Root Cause:** `createConfigModal` had `statsSnapshot = new Map()` defaulted, but the instantiation call inside `counter-widget.js` omitted passing the `statsSnapshot` argument.
 * **Fix:** Explicitly retrieved live stats map via `getBrandStats()` inside the button click listener and passed `statsSnapshot: currentStats` into `createConfigModal`.
+
+### 7.4 Cross-Catalog Feed Parsing & DOM Variance [21-07-2026]
+
+* **Issue 1 (Grid Card Invalidation):** Injection into aggregated home grids failed due to stricter container class chains (`.HomeBlocks-module-scss-module__BQ-Taq__homepage-blocks__item`).
+  * **Fix:** Updated grid selectors to query top-level attributes `[data-testid="grid-item"]` and `.feed-grid__item` alongside module wrappers.
+* **Issue 2 (Base Price Null/Dash Return `—`):** Catalog parser returned `—` for base prices because Vinted moved base price text inside `.title-content` while reserving `[data-testid="total-combined-price"]` for buyer-protection totals.
+  * **Fix:** Established a multi-selector fallback chain in `parseFirstCatalogItem`:
+    1. Primary check: `[data-testid="feed-item--price-text"]`, `.title-content p`, `.new-item-box__title p`.
+    2. Overlay title attribute fallback: Regex extraction (`/(\d+[.,]\d+\s*€)/`) from `a[title]`.
+    3. Bidirectional fallback: If base price or total price is missing, sync values across both fields (`itemPrice = totalPrice`).
+
+* **What was distilled & why:**
+
+    1. **Targeted Focus:** Captures the precise DOM selector shift on Vinted's base price element (`.title-content p` vs `total-combined-price`) that caused the `—` display bug.
+    2. **Technical Details:** Explains the specific resolution mechanism (fallback chain + title regex parsing + cross-field sync) without adding bloat.
+    3. **Consistency:** Matches the date stamp, bullet structure, and code/attribute formatting of the rest of Section 7.
