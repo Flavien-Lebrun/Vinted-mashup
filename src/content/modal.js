@@ -3,7 +3,7 @@ export function createConfigModal({ bannedBrands, onAddBrand, onDeleteBrand, onC
 
     // Maintain a local mutable copy of the brand array within the modal's runtime context
     let activeBannedBrands = [...bannedBrands];
-    
+
     // Track brands unchecked during this specific interactive session
     const unselectedBrands = new Set();
 
@@ -44,12 +44,23 @@ export function createConfigModal({ bannedBrands, onAddBrand, onDeleteBrand, onC
     function renderListItems() {
         listContainer.innerHTML = '';
         const query = currentSearchQuery.trim().toLowerCase();
-        
+
         // Merge list state and alphabetically sort so elements never jump position on toggle
         const allVisibleBrands = [...new Set([...activeBannedBrands, ...unselectedBrands])];
-        allVisibleBrands.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+        allVisibleBrands.sort((a, b) => {
+            const countA = statsSnapshot.get(a.trim().toLowerCase()) || 0;
+            const countB = statsSnapshot.get(b.trim().toLowerCase()) || 0;
 
-        const filteredBrands = allVisibleBrands.filter(brand => 
+            // Primary sort: higher counts come first
+            if (countB !== countA) {
+                return countB - countA;
+            }
+
+            // Secondary sort: alphabetical for brands with the same count (or both 0)
+            return a.localeCompare(b, undefined, { sensitivity: 'base' });
+        });
+        
+        const filteredBrands = allVisibleBrands.filter(brand =>
             brand.toLowerCase().includes(query)
         );
 
@@ -63,10 +74,10 @@ export function createConfigModal({ bannedBrands, onAddBrand, onDeleteBrand, onC
 
                 const li = document.createElement('li');
                 li.className = `pile__element ${!isChecked ? 'mashinted-row-muted' : ''}`;
-                
+
                 // Using the brand name inside the checkbox ID to preserve unique label association safely
                 const safeIdSuffix = normalizedName.replace(/[^a-z0-9]/g, '_');
-                
+
                 li.innerHTML = `
                     <div class="mashinted-row-container">
                       <div class="mashinted-row-left-content">
@@ -115,9 +126,9 @@ export function createConfigModal({ bannedBrands, onAddBrand, onDeleteBrand, onC
 
             addActionLi.addEventListener('click', () => {
                 const newBrand = currentSearchQuery.trim();
-                unselectedBrands.delete(newBrand); 
+                unselectedBrands.delete(newBrand);
                 onAddBrand(newBrand);
-                
+
                 currentSearchQuery = '';
                 searchInput.value = '';
                 searchInput.focus();
@@ -138,7 +149,7 @@ export function createConfigModal({ bannedBrands, onAddBrand, onDeleteBrand, onC
         if (e.key === 'Enter' && currentSearchQuery.trim()) {
             const query = currentSearchQuery.trim();
             const hasExactMatch = activeBannedBrands.some(b => b.toLowerCase() === query.toLowerCase());
-            
+
             if (!hasExactMatch) {
                 unselectedBrands.delete(query);
                 onAddBrand(query);
