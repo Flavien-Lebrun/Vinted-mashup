@@ -559,3 +559,33 @@ li.pile__element:not(:last-child) {
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
+
+/* <--- Aggregator ---> */
+/* Add to extension content styles */
+/*.mashinted-fav-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.85);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  color: #8e8e93;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.mashinted-fav-btn:hover {
+  transform: scale(1.1);
+  background: #ffffff;
+}
+
+.mashinted-fav-btn.is-active {
+  color: #ff3b30;
+}*/
