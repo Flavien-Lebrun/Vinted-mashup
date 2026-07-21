@@ -17,70 +17,108 @@
     display: none !important;
 }
 
-/* Ensure our button acts exactly like Vinted's, but with its own animations and transition timings */
+/* <--- Trash Icon Entry & Spring Animations ---> */
+
 .mashinted-trash-btn {
-    cursor: pointer !important;
-    border: none !important;
     outline: none !important;
     transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-
-    /* Spring-in entry animation to mask React hydration updates */
-    animation: mashintedSpringIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+    will-change: transform, opacity;
+    
+    /* Spring-in entry animation when attached to DOM */
+    animation: mashintedSpringIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
 }
 
-/* Slight scale feedback when interacting */
 .mashinted-trash-btn:after {
     transform: scale(1.06) !important;
 }
 
 .mashinted-trash-btn:active {
-    transform: scale(0.95) !important;
+    transform: scale(0.92) !important;
 }
 
-/* Replicate their greyscale transition but transition into deletion red */
 .mashinted-trash-btn svg {
-    transition: stroke 0.15s ease !important;
+    transition: stroke 0.15s ease, color 0.15s ease !important;
     fill: none;
 }
 
 .mashinted-trash-btn:hover .web_ui__Icon__greyscale-level-2 {
     color: rgba(var(--primary-default), 1) !important;
-    /* Vinted text/icon color is controlled via 'currentColor' */
 }
 
-/* Smooth pop scaling keyframe */
+/* Smooth spring entry keyframe */
 @keyframes mashintedSpringIn {
     0% {
         opacity: 0;
-        transform: scale(0.6);
+        transform: scale(0.4) translateY(4px);
     }
-
+    70% {
+        opacity: 1;
+        transform: scale(1.08) translateY(-1px);
+    }
     100% {
         opacity: 1;
-        transform: scale(1);
+        transform: scale(1) translateY(0);
     }
 }
 
-/* <--- Floating counter ---> */
+/* <--- Floating Counter Widget ---> */
+
+/* Color and rotation animation for the loading spinner */
+.mashinted-spinner-icon {
+    animation: mashinted-spinner-rotate 0.85s linear infinite;
+    transform-origin: center center;
+    color: rgba(var(--primary-default), 1) !important;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.mashinted-spinner-circle {
+    stroke: currentColor;
+}
+
+@keyframes mashinted-spinner-rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 /* Fixed container floating over the page */
 .mashinted-counter-widget-wrapper {
     position: fixed;
     bottom: 20px;
     right: 20px;
     z-index: 999999;
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transform-origin: bottom right;
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px) scale(0.96);
     pointer-events: none;
+    will-change: transform, opacity;
 }
 
 .mashinted-counter-widget-wrapper.is-visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
     pointer-events: auto;
 }
 
-/* The native Vinted subtle hover overlay */
+/* Button setup with smooth width expansion */
+.mashinted-counter-widget-wrapper button {
+    cursor: pointer !important;
+    position: relative;
+    overflow: hidden;
+    /* Enables fluid width expansion when text/contents change */
+    transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), 
+                padding 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.2s ease,
+                background-color 0.2s ease !important;
+    will-change: width, padding;
+}
+
+/* Vinted subtle hover overlay */
 .mashinted-counter-widget-wrapper button:hover::after {
     content: "";
     background-color: rgba(var(--greyscale-level-1), .02);
@@ -90,54 +128,62 @@
     top: 0;
     left: 0;
     pointer-events: none;
-    /* Ensures the button underneath still receives clicks */
 }
 
-.mashinted-counter-widget-wrapper button {
-    cursor: pointer !important;
-    position: relative;
-    /* Anchors the absolute ::after element */
-    overflow: hidden;
-    /* Keeps the overlay strictly inside the rounded borders */
+/* Entry/Upgrade cross-fade container */
+.mashinted-counter-widget-wrapper .web_ui__Chip__text,
+.mashinted-counter-widget-wrapper .web_ui__Chip__suffix {
+    display: inline-flex;
+    align-items: center;
+    animation: mashintedContentSwap 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    will-change: transform, opacity;
 }
 
-/* Updated Badge: Fits Vinted's native text color variables perfectly */
+/* Updated Badge: Fits Vinted's native text variables */
 .mashinted-counter-widget-wrapper .widget-count-badge {
     font-size: inherit;
     font-weight: inherit;
-    color: inherit;
     margin-right: 4px;
     display: inline-block;
     will-change: transform, opacity, color;
     transform: translate3d(0, 0, 0);
 }
 
-/* The visual pop animation triggered via JS when the count changes */
+/* Smooth increment pulse animation */
 .mashinted-counter-widget-wrapper .widget-count-badge.pulse-bump {
     animation: counter-smooth-increment 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* <--- Keyframes ---> */
+
+/* Smooth content cross-fade when replacing Loading... with count/chevron */
+@keyframes mashintedContentSwap {
+    0% {
+        opacity: 0;
+        transform: translateY(3px) scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 @keyframes counter-smooth-increment {
     0% {
         transform: translate3d(0, 0, 0) scale(1);
-        opacity: 1;
+        color: rgba(var(--amplified-default), 1);
     }
-
     15% {
         transform: translate3d(0, -3px, 0) scale(1.2);
         color: rgba(var(--primary-default), 1);
-        opacity: 0.9;
     }
-
     45% {
         transform: translate3d(0, -0.5px, 0) scale(1.05);
         color: rgba(var(--primary-default), 1);
     }
-
     100% {
         transform: translate3d(0, 0, 0) scale(1);
-        color: inherit;
-        opacity: 1;
+        color: rgba(var(--amplified-default), 1);
     }
 }
 
@@ -298,6 +344,7 @@
 ul.pile {
     list-style: none;
     padding: 0;
+    margin: 0;
     width: 100%;
     overflow-y: auto;
 }
@@ -311,6 +358,7 @@ li.pile__element {
 /* Single line hairline border separator */
 li.pile__element:not(:last-child) {
     border-bottom: 1px solid var(--vinted-ext-border);
+    margin-top: 1px !important;
 }
 
 /* Explicit single row container wrapper override */
@@ -327,7 +375,8 @@ li.pile__element:not(:last-child) {
 .mashinted-row-left-content {
     display: flex;
     align-items: center;
-    gap: 12px;
+    font-size: 1.5rem;
+    gap: 5px;
     flex-grow: 1;
     min-width: 0;
     /* Prevents long names from exploding layout lines */
@@ -336,16 +385,12 @@ li.pile__element:not(:last-child) {
 /* Minimalist Left Counter Badge without background borders */
 .mashinted-brand-minimal-counter {
     color: var(--vinted-ext-primary);
-    font-size: 1.2rem;
-    font-weight: 700;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
     /* Keeps numerical width constant */
 }
 
 .mashinted-brand-plain-name {
-    font-size: 15px;
-    font-weight: 500;
     color: var(--vinted-ext-text);
     white-space: nowrap;
     overflow: hidden;
@@ -414,23 +459,22 @@ li.pile__element:not(:last-child) {
 }
 
 .mashinted-inline-add-btn {
-    background: var(--vinted-ext-primary);
-    color: #ffffff;
-    border: none;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background-color: transparent;
+  color: var(--vinted-ext-primary, currentColor);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
 }
 
-.mashinted-quick-add-row-wrapper:hover .mashinted-inline-add-btn {
-    transform: scale(1.1);
+.mashinted-inline-add-btn:hover {
+  background-color: rgba(0, 0, 0, 0.06);
 }
 
 /* ==========================================================================

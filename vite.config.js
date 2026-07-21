@@ -5,15 +5,12 @@ import { resolve } from 'path';
 import manifest from './src/manifest.json';
 
 export default defineConfig({
-  root: resolve(__dirname, 'src'),
-  publicDir: resolve(__dirname, 'public'),
+  publicDir: 'public',
   build: {
-    outDir: resolve(__dirname, 'dist'),
+    outDir: 'dist',
     emptyOutDir: true,
   },
   server: {
-    // Force the dev server to use a strict port and cors settings 
-    // to allow Chrome to fetch internal modules safely
     port: 5173,
     strictPort: true,
     hmr: {
@@ -26,12 +23,11 @@ export default defineConfig({
     },
   },
   plugins: [
-    crx({ 
-        manifest 
-    }),
+    crx({ manifest }),
     eslint({
-      failOnError: true,   // Breaks the build if there is a syntax or import error
+      failOnError: true,
       failOnWarning: false,
-      include: ['src/**/*.js', 'index.js', 'filter.js', 'state.js'] // Adjust paths to your files
-    })],
+      include: ['src/**/*.js', 'index.js', 'filter.js', 'state.js']
+    }),
+  ],
 });
